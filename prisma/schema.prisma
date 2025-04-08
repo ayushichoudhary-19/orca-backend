@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Call {
+  id           String   @id
+  from         String
+  to           String
+  status       String
+  duration     Int?
+  recordingUrl String?
+  notes        String?
+  script       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  feedback     Feedback[]
+  sessionId    String?
+  session      CallSession? @relation(fields: [sessionId], references: [id])
+  sequenceIndex Int?     @default(0)
+}
+
+model Feedback {
+  id              String         @id @default(uuid())
+  callOutcome     CallOutcome
+  leadStatus      LeadStatus?
+  notes           String?
+  call            Call          @relation(fields: [callId], references: [id])
+  callId          String
+  createdAt       DateTime      @default(now())
+}
+
+enum CallOutcome {
+  ANSWERED
+  WENT_TO_VOICEMAIL
+  NO_ANSWER
+  CALL_DROPPED
+  TECHNICAL_ISSUE
+  WRONG_NUMBER
+}
+
+enum LeadStatus {
+  HIGH_POTENTIAL
+  WARM_LEAD
+  COLD_LEAD
+  NOT_A_FIT
+  USING_COMPETITOR
+}
+
+model CallSession {
+  id           String   @id @default(uuid())
+  phoneNumbers String[]
+  currentIndex Int      @default(0)
+  isComplete   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  calls        Call[]
+}
