@@ -6,14 +6,16 @@ import { createServer } from "http";
 import { Server as SocketServer, Socket } from "socket.io";
 import twilio from "twilio";
 import callRoutes from "./routes/call.routes";
-import { PrismaClient } from "@prisma/client";
 import path from "path";
 import { CallService } from "./services/call.service";
+import mongoose from 'mongoose';
 
 dotenv.config();
 
-// Initialize Prisma client
-export const prisma = new PrismaClient();
+// Add MongoDB connection
+mongoose.connect(process.env.MONGODB_URI!)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Initialize Express app
 const app = express();
@@ -112,9 +114,9 @@ server.listen(PORT, () => {
   console.log(`Visit http://localhost:${PORT} to access the Twilio Call App`);
 });
 
-// Handle graceful shutdown
+// Update shutdown handler
 process.on("SIGINT", async () => {
-  await prisma.$disconnect();
+  await mongoose.disconnect();
   console.log("Disconnected from database");
   process.exit(0);
 });
