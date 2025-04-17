@@ -8,11 +8,17 @@ import twilio from "twilio";
 import callRoutes from "./routes/call.routes";
 import path from "path";
 import { CallService } from "./services/call.service";
+import membershipRoutes from "./routes/membership.routes";
+import userRoutes from "./routes/user.routes";
+import campaignRoutes from "./routes/campaign.routes";
+import businessRoutes from "./routes/business.routes";
+import featureCategoryRoutes from "./routes/featureCategory.routes";
+import featureRoutes from "./routes/feature.routes";
+import roleRoutes from "./routes/role.routes";
 import mongoose from 'mongoose';
 
 dotenv.config();
 
-// Add MongoDB connection
 mongoose.connect(process.env.MONGODB_URI!)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -45,6 +51,14 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // Routes
 app.use("/api/calls", callRoutes);
+app.use("/api/memberships", membershipRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/campaign", campaignRoutes);
+app.use("/api/business", businessRoutes);
+app.use("/api/featureCategory", featureCategoryRoutes);
+app.use("/api/feature", featureRoutes);
+app.use("/api/role", roleRoutes);
+
 
 // Root route
 app.get("/", (req, res) => {
