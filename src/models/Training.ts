@@ -1,41 +1,49 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { JSONContent } from "@tiptap/core";
 
-interface Section {
-  _id?: mongoose.Types.ObjectId;
-  title: string;
-  content: string;
-}
+export type TrainingType =
+  | "company_overview"
+  | "product_overview"
+  | "buyer_persona"
+  | "competition"
+  | "qualification_criteria"
+  | "objection_handling";
 
 export interface ITraining extends Document {
+  campaignId: mongoose.Types.ObjectId;
+  type?: TrainingType;
   title: string;
   description: string;
-  campaignId: mongoose.Types.ObjectId;
-  sections: Section[];
+  content: JSONContent;
   isVisible: boolean;
-  sortOrder: number;
-  lastEditedBy: string;
-  lastSavedAt: Date;
   isPublished: boolean;
+  sortOrder: number;
+  lastSavedAt: Date;
+  lastEditedBy: string;
 }
 
-const SectionSchema = new Schema<Section>(
-  {
-    title: { type: String, required: true },
-    content: { type: String, required: true },
-  },
-  { _id: true } // Auto-generates `_id` for each section block
-);
-
 const TrainingSchema = new Schema<ITraining>({
+  campaignId: { type: Schema.Types.ObjectId, ref: "Campaign", required: true },
+  type: {
+    type: String,
+    enum: [
+      "company_overview",
+      "product_overview",
+      "buyer_persona",
+      "competition",
+      "qualification_criteria",
+      "objection_handling",
+    ],
+    default: null,
+  },
   title: { type: String, required: true },
   description: { type: String, required: true },
-  campaignId: { type: Schema.Types.ObjectId, ref: "Campaign", required: true },
-  sections: { type: [SectionSchema], default: [] },
+  content: { type: Schema.Types.Mixed, required: false, default: null },
   isVisible: { type: Boolean, default: true },
-  sortOrder: { type: Number, default: 0 },
-  lastEditedBy: { type: String, required: true },
-  lastSavedAt: { type: Date, default: Date.now },
   isPublished: { type: Boolean, default: false },
+  sortOrder: { type: Number, default: 0 },
+  lastSavedAt: { type: Date, default: Date.now },
+  lastEditedBy: { type: String, required: true },
 });
 
 export const TrainingModel = mongoose.model<ITraining>(

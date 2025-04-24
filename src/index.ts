@@ -15,7 +15,9 @@ import businessRoutes from "./routes/business.routes";
 import featureCategoryRoutes from "./routes/featureCategory.routes";
 import featureRoutes from "./routes/feature.routes";
 import roleRoutes from "./routes/role.routes";
+import trainingRoutes from "./routes/training.routes";
 import mongoose from 'mongoose';
+import { TrainingModel } from "./models/Training";
 
 dotenv.config();
 
@@ -49,7 +51,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, "../public")));
 
-// Routes
 app.use("/api/calls", callRoutes);
 app.use("/api/memberships", membershipRoutes);
 app.use("/api/user", userRoutes);
@@ -58,6 +59,7 @@ app.use("/api/business", businessRoutes);
 app.use("/api/featureCategory", featureCategoryRoutes);
 app.use("/api/feature", featureRoutes);
 app.use("/api/role", roleRoutes);
+app.use("/api/trainings", trainingRoutes);
 
 
 // Root route
