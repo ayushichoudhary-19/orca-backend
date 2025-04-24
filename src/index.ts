@@ -17,7 +17,7 @@ import featureRoutes from "./routes/feature.routes";
 import roleRoutes from "./routes/role.routes";
 import trainingRoutes from "./routes/training.routes";
 import mongoose from 'mongoose';
-import { TrainingModel } from "./models/Training";
+import contextRoutes from "./routes/context.routes";
 
 dotenv.config();
 
@@ -60,7 +60,7 @@ app.use("/api/featureCategory", featureCategoryRoutes);
 app.use("/api/feature", featureRoutes);
 app.use("/api/role", roleRoutes);
 app.use("/api/trainings", trainingRoutes);
-
+app.use("/api/contexts", contextRoutes);
 
 // Root route
 app.get("/", (req, res) => {
