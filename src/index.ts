@@ -18,6 +18,15 @@ import roleRoutes from "./routes/role.routes";
 import trainingRoutes from "./routes/training.routes";
 import mongoose from 'mongoose';
 import contextRoutes from "./routes/context.routes";
+import postRoutes from "./routes/post.routes";
+import uploadRoutes from "./routes/upload.routes";
+import auditionRoutes from "./routes/audition.routes";
+import debugRoutes from "./routes/debug.routes";
+import calendlyRoutes from "./routes/calendly.route";
+import leadsRoutes from "./routes/leads.routes";
+import salesRepRoutes from "./routes/salesRep.routes";
+import accountExecutiveRoutes from "./routes/AE.routes";
+import billingRoutes from "./routes/billing.routes";
 
 dotenv.config();
 
@@ -48,7 +57,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files from the public directory
+
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.use("/api/calls", callRoutes);
@@ -61,6 +70,15 @@ app.use("/api/feature", featureRoutes);
 app.use("/api/role", roleRoutes);
 app.use("/api/trainings", trainingRoutes);
 app.use("/api/contexts", contextRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/auditions', auditionRoutes);
+app.use("/api/debug", debugRoutes);
+app.use("/api/calendly", calendlyRoutes);
+app.use("/api/leads", leadsRoutes);
+app.use("/api/salesRep", salesRepRoutes);
+app.use("/api/accountExecutive", accountExecutiveRoutes);
+app.use("/api/billing", billingRoutes);
 
 // Root route
 app.get("/", (req, res) => {

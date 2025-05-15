@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
 // Enums
 export enum CallOutcome {
@@ -41,6 +41,8 @@ export interface ICall extends Document {
   sessionId?: string;
   sequenceIndex?: number;
   feedback: IFeedback[];
+  campaignId: Types.ObjectId;
+  salesRepId: Types.ObjectId;
 }
 
 export interface ICallSession extends Document {
@@ -98,6 +100,16 @@ const CallSchema = new Schema({
     default: 0
   },
   feedback: [FeedbackSchema],
+  campaignId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: 'Campaign'
+  },
+  salesRepId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: 'SalesRep'
+  },
   createdAt: {
     type: Date,
     default: Date.now

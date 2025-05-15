@@ -24,8 +24,31 @@ export interface ICampaign extends Document {
   signatoryName?: string;
   signatoryTitle?: string;
   signedAt?: Date;
-  signatureBase64?: String,
+  signatureBase64?: String;
   createdAt: Date;
+  calendlyLink: String;
+  weeklyEmailReports?: boolean;
+  elevatorPitch?: string;
+  fullTimeHiringNotes?: string;
+  jobDescriptionImageUrl?: string;
+  logoImageUrl?: string;
+  qualifiedLeadPrice?: number;
+  qualificationCriteria?: {
+    companySize?: string;
+    prospectTitle?: string;
+    companyIndustry?: string;
+    painPoint?: string;
+  };
+  campaignControls?: {
+    selfSourced: boolean;
+    dialerAllowed: boolean;
+    marketplaceVisible: boolean;
+    callbacksAllowed: boolean;
+  };
+  callingHours?: {
+    [day: string]: { open: boolean; start?: string; end?: string };
+  };
+  accountExecutives?: string[];
 }
 
 const CampaignSchema = new Schema<ICampaign>({
@@ -55,6 +78,34 @@ const CampaignSchema = new Schema<ICampaign>({
   signedAt: Date,
   signatureBase64: String,
   createdAt: { type: Date, default: Date.now },
+  calendlyLink: String,
+  weeklyEmailReports: { type: Boolean, default: false },
+  elevatorPitch: String,
+  fullTimeHiringNotes: String,
+  jobDescriptionImageUrl: String,
+  logoImageUrl: String,
+  qualifiedLeadPrice: Number,
+  qualificationCriteria: {
+    companySize: String,
+    prospectTitle: String,
+    companyIndustry: String,
+    painPoint: String,
+  },
+  campaignControls: {
+    selfSourced: { type: Boolean, default: false },
+    dialerAllowed: { type: Boolean, default: true },
+    marketplaceVisible: { type: Boolean, default: true },
+    callbacksAllowed: { type: Boolean, default: true }
+  },
+  callingHours: {
+    type: Map,
+    of: {
+      open: { type: Boolean, default: false },
+      start: String,
+      end: String
+    }
+  },
+  accountExecutives: [String]
 });
 
 CampaignSchema.index({ businessId: 1 });

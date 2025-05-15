@@ -5,8 +5,10 @@ import {
   getBusinessesByUser,
   updateBusinessDetails,
 } from "../controllers/business.controller";
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
+router.use(authenticate);
 
 router.post("/", createBusiness);
 router.get("/:id", getBusinessById);
