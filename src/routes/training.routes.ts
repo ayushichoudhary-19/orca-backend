@@ -11,6 +11,10 @@ import {
   checkCoreCompletion,
   reorderTrainings,
   bulkUpdateVisibility,
+  getTrainingsForSDR,
+  getTrainingContentById,
+  markTrainingComplete,
+  getTrainingProgress
 } from "../controllers/training.controller";
 import { TRAINING_TYPES } from "../utils/trainingTypes";
 
@@ -30,5 +34,9 @@ router.post("/visibility-bulk", bulkUpdateVisibility);
 router.get("/core-types", (req, res) => {
   res.status(200).json(TRAINING_TYPES);
 });
+router.get("/:campaignId/sdr", getTrainingsForSDR);
+router.get("/content/:id", getTrainingContentById);
+router.post("/complete/:id", markTrainingComplete);
+router.get("/progress/:campaignId/:salesRepId", getTrainingProgress);
 
 export default router;

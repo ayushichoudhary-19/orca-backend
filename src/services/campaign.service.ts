@@ -1,4 +1,4 @@
-import { Campaign } from "../models/Campaign";
+import { Campaign, CampaignStatus } from "../models/Campaign";
 
 export const createCampaign = async (data: any) => {
   return await Campaign.create(data);
@@ -85,4 +85,20 @@ export const addIdealCustomerDetails = async (
 export const getCampaignStatus = async (campaignId: string) => {
   const campaign = await Campaign.findById(campaignId).select('status').lean();
   return campaign ? campaign.status : null;
+};
+
+export const getPublicCampaignsWithBusinessName = async () => {
+  console.log("getPublicCampaignsWithBusinessName");
+  return await Campaign.find({
+    status: CampaignStatus.ACTIVE,
+    "campaignControls.marketplaceVisible": true,
+  })
+    .select(
+      "_id campaignName elevatorPitch qualifiedLeadPrice industry logoImageUrl companyLocation businessId"
+    )
+    .populate({
+      path: "businessId",
+      select: "name",
+    })
+    .lean();
 };

@@ -42,7 +42,7 @@ export interface ICall extends Document {
   sequenceIndex?: number;
   feedback: IFeedback[];
   campaignId: Types.ObjectId;
-  salesRepId: Types.ObjectId;
+  salesRepId: string;
 }
 
 export interface ICallSession extends Document {
@@ -106,7 +106,7 @@ const CallSchema = new Schema({
     ref: 'Campaign'
   },
   salesRepId: {
-    type: Schema.Types.ObjectId,
+    type: String,
     required: true,
     ref: 'SalesRep'
   },

@@ -12,8 +12,7 @@ const meetingSchema = new mongoose.Schema(
       default: "scheduled",
     },
     campaignId: { type: mongoose.Schema.Types.ObjectId, ref: "Campaign" },
-    salesRepId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    // salesRepId: { type: String },
+    salesRepId: { type: String },
   },
   { timestamps: true }
 );

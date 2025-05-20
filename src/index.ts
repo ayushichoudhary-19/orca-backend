@@ -24,7 +24,6 @@ import auditionRoutes from "./routes/audition.routes";
 import debugRoutes from "./routes/debug.routes";
 import calendlyRoutes from "./routes/calendly.route";
 import leadsRoutes from "./routes/leads.routes";
-import salesRepRoutes from "./routes/salesRep.routes";
 import accountExecutiveRoutes from "./routes/AE.routes";
 import billingRoutes from "./routes/billing.routes";
 
@@ -57,7 +56,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.use("/api/calls", callRoutes);
@@ -65,9 +63,9 @@ app.use("/api/memberships", membershipRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/campaign", campaignRoutes);
 app.use("/api/business", businessRoutes);
-app.use("/api/featureCategory", featureCategoryRoutes);
-app.use("/api/feature", featureRoutes);
-app.use("/api/role", roleRoutes);
+app.use("/api/feature-categories", featureCategoryRoutes);
+app.use("/api/features", featureRoutes);
+app.use("/api/roles", roleRoutes);
 app.use("/api/trainings", trainingRoutes);
 app.use("/api/contexts", contextRoutes);
 app.use('/api/posts', postRoutes);
@@ -76,7 +74,6 @@ app.use('/api/auditions', auditionRoutes);
 app.use("/api/debug", debugRoutes);
 app.use("/api/calendly", calendlyRoutes);
 app.use("/api/leads", leadsRoutes);
-app.use("/api/salesRep", salesRepRoutes);
 app.use("/api/accountExecutive", accountExecutiveRoutes);
 app.use("/api/billing", billingRoutes);
 

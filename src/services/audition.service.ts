@@ -91,13 +91,17 @@ export const fetchQuestions = async (campaignId: string) => {
 export const submitAudition = async (
   firebaseUid: string,
   campaignId: string,
-  body: { responses: { questionId: string; audioUrl: string }[] }
+  body: {
+    responses: { questionId: string; audioUrl: string }[];
+    resumeUrl?: string;
+    experienceYears?: number;
+    country?: string;
+    linkedInUrl?: string;
+  }
 ) => {
-  // Step 1: Find SalesRep using userId
   const rep = await SalesRep.findOne({ userId: firebaseUid });
   if (!rep) throw new Error("Sales rep not found");
 
-  // Step 2: Proceed with ObjectId
   return SalesRepCampaignStatus.findOneAndUpdate(
     { salesRepId: rep._id, campaignId },
     {
@@ -105,6 +109,10 @@ export const submitAudition = async (
       auditionStatus: "submitted",
       lastAuditionAt: new Date(),
       $inc: { auditionAttempts: 1 },
+      resumeUrl: body.resumeUrl,
+      experienceYears: body.experienceYears,
+      country: body.country,
+      linkedInUrl: body.linkedInUrl,
     },
     { new: true, upsert: true }
   );

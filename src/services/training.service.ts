@@ -1,5 +1,7 @@
+import { SalesRepCampaignStatus } from "../models/SalesRepCampaignStatus";
 import { TrainingModel } from "../models/Training";
 import { TRAINING_TYPES } from "../utils/trainingTypes";
+import { Types } from "mongoose";
 
 export const seedDefaultTrainings = async (
   campaignId: string,
@@ -118,4 +120,86 @@ export const setPublishState = async (id: string, isPublished: boolean) => {
   }
 
   return training;
+};
+
+export const getVisibleTrainingsForCampaign = async (campaignId: string) => {
+  return await TrainingModel.find({
+    campaignId,
+    isVisible: true,
+    isPublished: true,
+  })
+    .sort({ sortOrder: 1 })
+    .lean();
+};
+
+export const getTrainingContentById = async (trainingId: string) => {
+  const training = await TrainingModel.findById(trainingId).lean();
+  if (!training) throw new Error("Training not found");
+  return training;
+};
+
+export const markTrainingComplete = async (
+  salesRepId: string,
+  trainingId: string
+) => {
+  const training = await TrainingModel.findById(trainingId);
+  if (!training) throw new Error("Training not found");
+
+  const trainingIdObject = training._id as Types.ObjectId;
+
+  let status = await SalesRepCampaignStatus.findOne({
+    campaignId: training.campaignId,
+    salesRepId,
+  });
+
+  if (!status) {
+    status = await SalesRepCampaignStatus.create({
+      campaignId: training.campaignId,
+      salesRepId,
+      trainingProgress: 0,
+      completedTrainingIds: [],
+      auditionStatus: "not_started",
+      auditionResponses: [],
+      auditionAttempts: 0,
+    });
+  }
+
+  if (
+    !status.completedTrainingIds?.some(
+      (id) => id.toString() === trainingIdObject.toString()
+    )
+  ) {
+    status.completedTrainingIds?.push(trainingIdObject);
+
+    const total = await TrainingModel.countDocuments({
+      campaignId: training.campaignId,
+      isVisible: true,
+      isPublished: true,
+    });
+
+    const completed = status.completedTrainingIds?.length || 0;
+    status.trainingProgress = Math.round((completed / total) * 100);
+    await status.save();
+  }
+
+  return {
+    message: "Training marked complete",
+    progress: status.trainingProgress,
+  };
+};
+
+export const getTrainingProgress = async (
+  campaignId: string,
+  salesRepId: string
+) => {
+  const status = await SalesRepCampaignStatus.findOne({
+    campaignId,
+    salesRepId,
+  }).lean();
+  if (!status) throw new Error("Progress not found");
+
+  return {
+    progress: status.trainingProgress,
+    completedTrainingIds: status.completedTrainingIds || [],
+  };
 };

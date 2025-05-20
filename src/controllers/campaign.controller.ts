@@ -10,6 +10,35 @@ export const createCampaign = async (req: Request, res: Response) => {
   }
 };
 
+export const getPublicCampaignsForMarketplace = async (req: Request, res: Response) => {
+  try {
+    console.log("Fetching public campaigns...");
+    const campaigns = await campaignService.getPublicCampaignsWithBusinessName();
+
+    console.log("campaigns fetched:", campaigns.length);
+
+    const sanitized = campaigns.map(campaign => {
+      const business = campaign.businessId as unknown as { name: string };
+      return {
+        _id: campaign._id,
+        campaignName: campaign.campaignName,
+        elevatorPitch: campaign.elevatorPitch,
+        qualifiedLeadPrice: campaign.qualifiedLeadPrice,
+        industry: campaign.industry,
+        logoImageUrl: campaign.logoImageUrl,
+        companyLocation: campaign.companyLocation,
+        businessName: business.name || "Unknown",
+        campaignTag: campaign.industry?.[0] || "General",
+      };
+    });
+
+    res.status(200).json(sanitized);
+  } catch (err: any) {
+    console.error("Error in /public route:", err.stack || err);
+    res.status(500).json({ error: err.message || "Unknown server error" });
+  }
+};
+
 export const getCampaignById = async (req: Request, res: Response) => {
   try {
     const campaign = await campaignService.getCampaignById(req.params.id);

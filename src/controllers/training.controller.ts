@@ -90,7 +90,6 @@ export const bulkUpdateVisibility = async (req: Request, res: Response) => {
   }
 };
 
-
 export const publishTraining = async (req: Request, res: Response) => {
   try {
     const training = await trainingService.setPublishState(req.params.id, true);
@@ -108,3 +107,52 @@ export const reorderTrainings = async (req: Request, res: Response) => {
   res.status(200).json({ message: "Reordered" });
 };
 
+export const getTrainingsForSDR = async (req: Request, res: Response) => {
+  try {
+    const { campaignId } = req.params;
+    const trainings = await trainingService.getVisibleTrainingsForCampaign(
+      campaignId
+    );
+    res.status(200).json(trainings);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch trainings" });
+  }
+};
+
+export const getTrainingContentById = async (req: Request, res: Response) => {
+  try {
+    const training = await trainingService.getTrainingContentById(
+      req.params.id
+    );
+    res.status(200).json(training);
+  } catch (err: any) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+};
+
+export const markTrainingComplete = async (req: Request, res: Response) => {
+  try {
+    const { salesRepId } = req.body;
+    const { id: trainingId } = req.params;
+    const status = await trainingService.markTrainingComplete(
+      salesRepId,
+      trainingId
+    );
+    res.status(200).json(status);
+  } catch (err: any) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+};
+
+export const getTrainingProgress = async (req: Request, res: Response) => {
+  try {
+    const { campaignId, salesRepId } = req.params;
+    const progress = await trainingService.getTrainingProgress(
+      campaignId,
+      salesRepId
+    );
+    res.status(200).json(progress);
+  } catch (err: any) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+};

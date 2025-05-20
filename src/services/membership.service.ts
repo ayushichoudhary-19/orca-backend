@@ -2,21 +2,21 @@ import { Membership } from "../models/Membership";
 
 export const assignUser = async (data: {
   userId: string;
-  businessId: string;
   roleId: string;
+  businessId?: string;
 }) => {
   const { userId, businessId, roleId } = data;
 
-  if (!userId || !businessId || !roleId) {
-    const error = new Error("Missing userId, businessId, or roleId");
+  if (!userId || !roleId) {
+    const error = new Error("Missing userId or roleId");
     (error as any).statusCode = 400;
     throw error;
   }
 
   return await Membership.create({
     userId,
-    businessId,
     roleId,
+    businessId: businessId || undefined,
     onboardingStep: 0,
   });
 };
@@ -79,11 +79,9 @@ export const checkIfAdmin = async (userId: string, businessId: string) => {
     throw error;
   }
 
-  const membership = await Membership.findOne({
-    userId,
-    businessId,
-  }).populate("roleId");
-
+  const membership = await Membership.findOne({ userId, businessId }).populate(
+    "roleId"
+  );
   const roleName = (membership?.roleId as any)?.name?.toLowerCase();
   return roleName === "admin";
 };

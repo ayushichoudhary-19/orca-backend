@@ -10,7 +10,7 @@ export type AuditionStatus =
 
 export interface ISalesRepCampaignStatus extends Document {
   campaignId: mongoose.Types.ObjectId;
-  salesRepId: mongoose.Types.ObjectId;
+  salesRepId: string;
   trainingProgress: number;
   completedTrainingIds?: mongoose.Types.ObjectId[];
   auditionStatus: AuditionStatus;
@@ -21,12 +21,16 @@ export interface ISalesRepCampaignStatus extends Document {
   auditionAttempts: number;
   lastAuditionAt?: Date;
   feedbackNotes?: string;
+  resumeUrl?: string;
+  experienceYears?: number;
+  country?: string;
+  linkedInUrl?: string;
   createdAt: Date;
 }
 
 const SalesRepCampaignStatusSchema = new Schema<ISalesRepCampaignStatus>({
   campaignId: { type: Schema.Types.ObjectId, ref: "Campaign", required: true },
-  salesRepId: { type: Schema.Types.ObjectId, ref: "SalesRep", required: true },
+  salesRepId: { type: String, required: true },
   trainingProgress: { type: Number, default: 0 },
   completedTrainingIds: [{ type: Schema.Types.ObjectId, ref: "Training" }],
   auditionStatus: {
@@ -43,6 +47,10 @@ const SalesRepCampaignStatusSchema = new Schema<ISalesRepCampaignStatus>({
   auditionAttempts: { type: Number, default: 0 },
   lastAuditionAt: { type: Date },
   feedbackNotes: { type: String },
+  resumeUrl: { type: String },
+  experienceYears: { type: Number },
+  country: { type: String },
+  linkedInUrl: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

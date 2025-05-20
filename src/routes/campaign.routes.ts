@@ -8,6 +8,7 @@ import {
   addContactsToCampaign,
   addIdealCustomerDetails,
   getCampaignStatus,
+  getPublicCampaignsForMarketplace,
 } from "../controllers/campaign.controller";
 import { Campaign } from "../models/Campaign";
 import { Meeting } from "../models/Meeting";
@@ -15,6 +16,7 @@ import { Meeting } from "../models/Meeting";
 const router = express.Router();
 
 router.post("/", createCampaign);
+router.get("/public", getPublicCampaignsForMarketplace);
 router.get("/:id", getCampaignById);
 router.get("/business/:businessId", getCampaignsByBusiness);
 router.patch("/:id/sign", signCampaign);

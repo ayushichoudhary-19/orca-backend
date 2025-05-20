@@ -95,17 +95,17 @@ const CampaignSchema = new Schema<ICampaign>({
     selfSourced: { type: Boolean, default: false },
     dialerAllowed: { type: Boolean, default: true },
     marketplaceVisible: { type: Boolean, default: true },
-    callbacksAllowed: { type: Boolean, default: true }
+    callbacksAllowed: { type: Boolean, default: true },
   },
   callingHours: {
     type: Map,
     of: {
       open: { type: Boolean, default: false },
       start: String,
-      end: String
-    }
+      end: String,
+    },
   },
-  accountExecutives: [String]
+  accountExecutives: [String],
 });
 
 CampaignSchema.index({ businessId: 1 });

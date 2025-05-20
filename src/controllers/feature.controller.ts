@@ -18,3 +18,12 @@ export const getFeaturesByCategory = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch features" });
   }
 };
+
+export const fetchAllFeatures = async (req: Request, res: Response) => {
+  try {
+    const features = await Feature.find({});
+    res.status(200).json(features);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch features" });
+  }
+};

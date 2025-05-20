@@ -8,7 +8,7 @@ import {
   rejectRep,
   getCampaignStatus,
   getAuditionQuestions,
-  submitAudition
+  submitAudition,
 } from "../controllers/audition.controller";
 import { SalesRepCampaignStatus } from "../models/SalesRepCampaignStatus";
 
@@ -29,7 +29,10 @@ router.post("/:campaignId/submit", submitAudition);
 
 router.get("/:campaignId/reps/:repId/audition", async (req, res) => {
   const { campaignId, repId } = req.params;
-  const record = await SalesRepCampaignStatus.findOne({ campaignId, salesRepId: repId }).populate("auditionResponses.questionId");
+  const record = await SalesRepCampaignStatus.findOne({
+    campaignId,
+    salesRepId: repId,
+  }).populate("auditionResponses.questionId");
   res.json(record);
 });
 
