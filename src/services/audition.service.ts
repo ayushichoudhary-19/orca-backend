@@ -1,19 +1,30 @@
 import { AuditionQuestion } from "../models/AuditionQuestion";
-import { SalesRep } from "../models/SalesRep";
 import { SalesRepCampaignStatus } from "../models/SalesRepCampaignStatus";
+import { User } from "../models/User";
 
-export const fetchRepsByCampaign = async (campaignId: string, status?: string) => {
+export const fetchRepsByCampaign = async (
+  campaignId: string,
+  status?: string
+) => {
   const filter: any = { campaignId };
 
   if (status === "approved" || status === "rejected") {
     filter.auditionStatus = status;
   } else if (status === "pending") {
-    filter.auditionStatus = { $in: ["submitted", "retry", "in_progress", "not_started"] };
+    filter.auditionStatus = {
+      $in: ["submitted", "retry", "in_progress", "not_started"],
+    };
   }
 
-  return SalesRepCampaignStatus.find(filter)
-    .populate("salesRepId")
-    .sort({ lastAuditionAt: -1 });
+  const reps = await SalesRepCampaignStatus.find(filter).lean();
+  const userIds = reps.map((r) => r.salesRepId);
+  const users = await User.find({ _id: { $in: userIds } }).lean();
+  const userMap = Object.fromEntries(users.map((u) => [u._id, u]));
+
+  return reps.map((r) => ({
+    ...r,
+    salesRepId: userMap[r.salesRepId] || null,
+  }));
 };
 
 export const addQuestion = async (
@@ -69,41 +80,27 @@ export const reject = async (
   );
 };
 
-
-export const getStatus = async (userId: string, campaignId: string) => {
-  const rep = await SalesRep.findOne({ userId });
-
-  if (!rep) {
-    throw new Error("Sales rep not found for this user");
-  }
-
-  return SalesRepCampaignStatus.findOne({
-    salesRepId: rep._id,
-    campaignId,
-  });
+export const getStatus = async (salesRepId: string, campaignId: string) => {
+  return SalesRepCampaignStatus.findOne({ salesRepId, campaignId }).lean();
 };
-
 
 export const fetchQuestions = async (campaignId: string) => {
   return AuditionQuestion.find({ campaignId });
 };
 
 export const submitAudition = async (
-  firebaseUid: string,
+  salesRepId: string,
   campaignId: string,
   body: {
     responses: { questionId: string; audioUrl: string }[];
     resumeUrl?: string;
-    experienceYears?: number;
+    experienceYears?: string;
     country?: string;
     linkedInUrl?: string;
   }
 ) => {
-  const rep = await SalesRep.findOne({ userId: firebaseUid });
-  if (!rep) throw new Error("Sales rep not found");
-
   return SalesRepCampaignStatus.findOneAndUpdate(
-    { salesRepId: rep._id, campaignId },
+    { salesRepId, campaignId },
     {
       auditionResponses: body.responses,
       auditionStatus: "submitted",
@@ -117,4 +114,3 @@ export const submitAudition = async (
     { new: true, upsert: true }
   );
 };
-

@@ -1,21 +1,20 @@
 import { Twilio } from "twilio";
 import { Server as SocketServer } from "socket.io";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
+import { Call, CallSession } from "../models/Call";
+import { Feedback } from "../models/Feedback";
+import { Lead } from "../models/Lead";
 import twilio from "twilio";
-
-import { Call, Feedback, CallSession, CallOutcome, LeadStatus } from "../models/index";
 
 dotenv.config();
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER || "";
-
-if (!accountSid || !authToken || !twilioPhoneNumber) {
-  throw new Error("Twilio credentials are not properly configured in .env file");
-}
-
-const twilioClient = new Twilio(accountSid, authToken);
+const twilioClient = new Twilio(
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
+);
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER!;
+let io: SocketServer;
 
 export enum CallStatus {
   INITIATED = "initiated",
@@ -30,19 +29,47 @@ export enum CallStatus {
   HOLDING = "holding",
 }
 
-let io: SocketServer;
-
 export class CallService {
   static initializeSocketIO(socketIo: SocketServer) {
     io = socketIo;
   }
 
-  static async createCallRecord({ id, to, from, status }: { id: string; to: string; from: string; status: CallStatus }) {
-    return await Call.create({ _id: id, to, from, status });
+  static async createCallRecord({
+    id,
+    to,
+    from,
+    status,
+    campaignId,
+    salesRepId,
+  }: {
+    id: string;
+    to: string;
+    from: string;
+    status: CallStatus;
+    campaignId: string;
+    salesRepId: string;
+  }) {
+    const lead = await Lead.findOne({ campaignId, phone: to });
+    return await Call.create({
+      _id: id,
+      to,
+      from,
+      status,
+      campaignId: new mongoose.Types.ObjectId(campaignId),
+      salesRepId,
+      leadId: lead?._id,
+    });
   }
-
-  static async startCallSession(phoneNumbers: string[], from: string = twilioPhoneNumber, script?: string) {
-    const session = await CallSession.create({ phoneNumbers, currentIndex: 0, isComplete: false });
+  static async startCallSession(
+    phoneNumbers: string[],
+    from: string = twilioPhoneNumber,
+    script?: string
+  ) {
+    const session = await CallSession.create({
+      phoneNumbers,
+      currentIndex: 0,
+      isComplete: false,
+    });
 
     if (phoneNumbers.length === 0) return { session, currentCall: null };
 
@@ -86,8 +113,21 @@ export class CallService {
     return { session, currentCall: callRecord };
   }
 
-  static async proceedToNextCall(sessionId: string, currentCallId: string, feedback: { callOutcome: CallOutcome; leadStatus?: LeadStatus; notes?: string }, from: string = twilioPhoneNumber, script?: string) {
-    await Feedback.create({ callOutcome: feedback.callOutcome, leadStatus: feedback.leadStatus || null, notes: feedback.notes || null, callId: currentCallId });
+  static async proceedToNextCall(
+    sessionId: string,
+    currentCallId: string,
+    feedback: {
+      feedbackReason: string;
+      notes?: string;
+    },
+    from: string = twilioPhoneNumber,
+    script?: string
+  ) {
+    await Feedback.create({
+      feedbackReason: feedback.feedbackReason,
+      notes: feedback.notes || null,
+      callId: currentCallId,
+    });
 
     const session = await CallSession.findById(sessionId);
     if (!session) throw new Error("Call session not found");
@@ -97,7 +137,10 @@ export class CallService {
       session.isComplete = true;
       await session.save();
 
-      io?.emit("call-session-complete", { sessionId, totalCalls: session.phoneNumbers.length });
+      io?.emit("call-session-complete", {
+        sessionId,
+        totalCalls: session.phoneNumbers.length,
+      });
       return null;
     }
 
@@ -146,7 +189,12 @@ export class CallService {
     return `<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Dial callerId=\"${twilioPhoneNumber}\"><Number>${to}</Number></Dial></Response>`;
   }
 
-  static async handleCallStatusUpdate(callSid: string, status: string, duration?: number, recordingUrl?: string) {
+  static async handleCallStatusUpdate(
+    callSid: string,
+    status: string,
+    duration?: number,
+    recordingUrl?: string
+  ) {
     const call = await Call.findOne({ _id: callSid });
     if (!call) return null;
 
@@ -173,9 +221,32 @@ export class CallService {
     return call;
   }
 
-  static async saveFeedback(callId: string, feedbackData: { callOutcome: CallOutcome; leadStatus?: LeadStatus; notes?: string | null }) {
+
+  static mapFeedbackToLeadStatus(feedbackReason: string): "called" | "disqualified" {
+    const mapping: Record<string, "called" | "disqualified"> = {
+      tentative_interest: "called",
+      no_pickup: "called",
+      not_interested: "disqualified",
+      not_qualified: "disqualified",
+      bad_data: "disqualified",
+    };
+    return mapping[feedbackReason] || "called";
+  }
+
+  static async saveFeedback(
+    callId: string,
+    feedbackData: {
+      feedbackReason: string;
+      notes?: string | null;
+    }
+  ) {
     const call = await Call.findById(callId);
     if (!call) throw new Error("Call not found");
+
+    if (call.leadId && feedbackData.feedbackReason) {
+      const newStatus = this.mapFeedbackToLeadStatus(feedbackData.feedbackReason);
+      await Lead.findByIdAndUpdate(call.leadId, { status: newStatus });
+    }
 
     const savedFeedback = await Feedback.create({ ...feedbackData, callId });
 
@@ -208,12 +279,21 @@ export class CallService {
     return CallSession.find().sort({ createdAt: -1 });
   }
 
-  static async updateCallStatus(id: string, status: string, duration?: number, recordingUrl?: string) {
-    return Call.findByIdAndUpdate(id, {
-      status,
-      ...(duration && { duration }),
-      ...(recordingUrl && { recordingUrl }),
-    }, { new: true });
+  static async updateCallStatus(
+    id: string,
+    status: string,
+    duration?: number,
+    recordingUrl?: string
+  ) {
+    return Call.findByIdAndUpdate(
+      id,
+      {
+        status,
+        ...(duration && { duration }),
+        ...(recordingUrl && { recordingUrl }),
+      },
+      { new: true }
+    );
   }
 
   static async endCall(callSid: string) {

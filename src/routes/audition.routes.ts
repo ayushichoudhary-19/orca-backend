@@ -23,7 +23,7 @@ router.put("/:campaignId/reps/:repId/retry", markAuditionRetry);
 router.put("/:campaignId/reps/:repId/approve", approveRep);
 router.put("/:campaignId/reps/:repId/reject", rejectRep);
 
-router.get("/:campaignId/status", getCampaignStatus);
+router.get("/:campaignId/status/:repId", getCampaignStatus);
 router.get("/:campaignId/questions", getAuditionQuestions);
 router.post("/:campaignId/submit", submitAudition);
 

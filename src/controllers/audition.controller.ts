@@ -56,16 +56,26 @@ export const rejectRep = async (req: Request, res: Response) => {
 };
 
 export const getCampaignStatus = async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(401).json({ error: "Unauthorized" });
+  const { campaignId, repId } = req.params;
+
+  if (!repId || !campaignId) {
+    res.status(400).json({ error: "Missing required parameters" });
     return;
   }
-  const status = await AuditionService.getStatus(
-    req.user.uid,
-    req.params.campaignId
-  );
-  res.json(status);
+
+  try {
+    const status = await AuditionService.getStatus(repId, campaignId);
+    if (!status) {
+      res.status(404).json({ message: "No status found" });
+      return;
+    }
+    res.json(status);
+  } catch (err) {
+    console.error("Error fetching status:", err);
+    res.status(500).json({ error: "Failed to fetch status" });
+  }
 };
+
 
 export const getAuditionQuestions = async (req: Request, res: Response) => {
   const questions = await AuditionService.fetchQuestions(req.params.campaignId);
@@ -73,15 +83,17 @@ export const getAuditionQuestions = async (req: Request, res: Response) => {
 };
 
 export const submitAudition = async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(401).json({ error: "Unauthorized" });
+  const { salesRepId } = req.body;
+  if (!salesRepId) {
+    res.status(400).json({ error: "Missing salesRepId in request body" });
     return;
   }
 
   const submission = await AuditionService.submitAudition(
-    req.user.uid,
+    salesRepId,
     req.params.campaignId,
     req.body
   );
+
   res.status(201).json(submission);
 };

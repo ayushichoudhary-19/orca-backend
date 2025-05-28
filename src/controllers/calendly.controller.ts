@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
 import { Meeting } from "../models/Meeting";
+import { Campaign } from "../models/Campaign";
+import axios from "axios";
+import { User } from "../models/User";
+import { Lead } from "../models/Lead";
 
 export const handleCalendlyWebhook = async (req: Request, res: Response) => {
   console.log("Webhook received:", req.body);
@@ -16,7 +20,13 @@ export const handleCalendlyWebhook = async (req: Request, res: Response) => {
       const uuid = scheduledEvent.uri;
 
       const campaignId = payload.tracking?.utm_campaign;
-      const salesRepId = payload.tracking?.utm_rep_id;
+
+      const sdrEmail = payload.questions_and_answers?.find(
+        (q: any) => q.question === "SDR's Registered Email ID"
+      )?.answer;
+
+      const salesRep = sdrEmail ? await User.findOne({ email: sdrEmail }) : null;
+      const salesRepId = salesRep?._id?.toString();
 
       await Meeting.create({
         calendlyEventId: uuid,
@@ -27,6 +37,11 @@ export const handleCalendlyWebhook = async (req: Request, res: Response) => {
         salesRepId,
         status: "scheduled",
       });
+
+      await Lead.findOneAndUpdate(
+        { email, campaignId },
+        { status: "meeting" }
+      );
     }
 
     if (event.event === "invitee.canceled") {
@@ -44,5 +59,91 @@ export const handleCalendlyWebhook = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Webhook handling error:", error);
     res.status(500).json({ error: "Webhook handling failed." });
+  }
+};
+
+
+const CLIENT_ID = process.env.CALENDLY_CLIENT_ID!;
+const CLIENT_SECRET = process.env.CALENDLY_CLIENT_SECRET!;
+const REDIRECT_URI = `${process.env.BASE_URL}/api/calendly/oauth/callback`;
+
+export const startCalendlyOAuth = (req: Request, res: Response) => {
+  const { campaignId } = req.query;
+
+  if (!campaignId) {
+    res.status(400).json({ error: "Missing campaignId in query" });
+    return;
+  }
+
+  const redirectUri = `${process.env.BASE_URL}/api/calendly/oauth/callback`;
+  const authUrl = `https://auth.calendly.com/oauth/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&state=${campaignId}`;
+
+  res.redirect(authUrl);
+};
+
+
+export const handleCalendlyOAuthCallback = async (
+  req: Request,
+  res: Response
+) => {
+  const code = req.query.code as string;
+  const campaignId = req.query.state as string;
+
+  if (!campaignId) {
+    res.status(400).send("Missing campaignId (state)");
+    return;
+  }
+
+  try {
+    // exchanging code
+    const tokenRes = await axios.post("https://auth.calendly.com/oauth/token", {
+      grant_type: "authorization_code",
+      code,
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      redirect_uri: REDIRECT_URI,
+    });
+
+    const accessToken = tokenRes.data.access_token;
+
+    // for fetching etch user info
+    const userRes = await axios.get("https://api.calendly.com/users/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    const calendlyLink = userRes.data.resource.scheduling_url;
+    const userUri = userRes.data.resource.uri;
+
+    // saving to Campaign
+    await Campaign.findByIdAndUpdate(campaignId, {
+      calendlyLink,
+      calendlyAccessToken: accessToken,
+    });
+
+    // registering webhook (for invitee.created & invitee.canceled)
+    await axios.post(
+      "https://api.calendly.com/webhook_subscriptions",
+      {
+        url: `${process.env.BASE_URL}/api/calendly/webhook`,
+        events: ["invitee.created", "invitee.canceled"],
+        scope: "user",
+        user: userUri,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.redirect(`${process.env.CLIENT_URL}/meetings?connected=calendly`);
+    return;
+  } catch (error) {
+    console.error("OAuth callback error", error);
+    res.status(500).send("Calendly OAuth failed");
+    return;
   }
 };

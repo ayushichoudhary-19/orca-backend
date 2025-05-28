@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { parseLeadCsvService } from "../services/lead.service";
+import { parseLeadCsvService, getLeadsByCampaignService } from "../services/lead.service";
 import mongoose from "mongoose";
 
 export const parseLeadCsv = async (req: Request, res: Response) => {
@@ -34,4 +34,21 @@ export const parseLeadCsv = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to process CSV upload." });
     return;
 }
+};
+
+export const getLeadsByCampaign = async (req: Request, res: Response) => {
+  const { campaignId } = req.params;
+
+  if (!campaignId) {
+    res.status(400).json({ error: "Campaign ID is required" });
+    return;
+  }
+
+  try {
+    const leads = await getLeadsByCampaignService(campaignId);
+    res.status(200).json(leads);
+  } catch (error) {
+    console.error("Error fetching leads:", error);
+    res.status(500).json({ error: "Failed to fetch campaign leads" });
+  }
 };

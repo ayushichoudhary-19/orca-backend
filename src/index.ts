@@ -16,12 +16,11 @@ import featureCategoryRoutes from "./routes/featureCategory.routes";
 import featureRoutes from "./routes/feature.routes";
 import roleRoutes from "./routes/role.routes";
 import trainingRoutes from "./routes/training.routes";
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 import contextRoutes from "./routes/context.routes";
 import postRoutes from "./routes/post.routes";
 import uploadRoutes from "./routes/upload.routes";
 import auditionRoutes from "./routes/audition.routes";
-import debugRoutes from "./routes/debug.routes";
 import calendlyRoutes from "./routes/calendly.route";
 import leadsRoutes from "./routes/leads.routes";
 import accountExecutiveRoutes from "./routes/AE.routes";
@@ -29,29 +28,24 @@ import billingRoutes from "./routes/billing.routes";
 
 dotenv.config();
 
-mongoose.connect(process.env.MONGODB_URI!)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+mongoose
+  .connect(process.env.MONGODB_URI!)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
-// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Create HTTP server
 const server = createServer(app);
 
-// Initialize Socket.IO
 const io = new SocketServer(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
 });
-
-// Initialize CallService with Socket.IO
 CallService.initializeSocketIO(io);
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -68,22 +62,19 @@ app.use("/api/features", featureRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/trainings", trainingRoutes);
 app.use("/api/contexts", contextRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/auditions', auditionRoutes);
-app.use("/api/debug", debugRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/uploads", uploadRoutes);
+app.use("/api/auditions", auditionRoutes);
 app.use("/api/calendly", calendlyRoutes);
 app.use("/api/leads", leadsRoutes);
 app.use("/api/accountExecutive", accountExecutiveRoutes);
 app.use("/api/billing", billingRoutes);
 
-// Root route
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-
-// Check for required environment variables
 if (
   !process.env.TWILIO_ACCOUNT_SID ||
   !process.env.TWILIO_AUTH_TOKEN ||
@@ -93,11 +84,9 @@ if (
   process.exit(1);
 }
 
-// Set up Socket.IO connection
 io.on("connection", (socket: Socket) => {
   console.log("Client connected:", socket.id);
 
-  // Listen for client events
   socket.on("join-call", (callId: string) => {
     socket.join(`call-${callId}`);
     console.log(`Client ${socket.id} joined call ${callId}`);
@@ -113,7 +102,6 @@ io.on("connection", (socket: Socket) => {
   });
 });
 
-// Generate Twilio token for client
 app.get("/api/twilio/token", async (req, res) => {
   try {
     const AccessToken = twilio.jwt.AccessToken;
@@ -139,13 +127,11 @@ app.get("/api/twilio/token", async (req, res) => {
   }
 });
 
-// Start server
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Visit http://localhost:${PORT} to access the Twilio Call App`);
 });
 
-// Update shutdown handler
 process.on("SIGINT", async () => {
   await mongoose.disconnect();
   console.log("Disconnected from database");

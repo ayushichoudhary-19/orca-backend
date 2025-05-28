@@ -38,7 +38,7 @@ const TrainingSchema = new Schema<ITraining>({
   },
   title: { type: String, required: true },
   description: { type: String, required: true },
-  content: { type: Schema.Types.Mixed, required: false, default: null },
+  content: { type: Schema.Types.Mixed, required: false, default: [] },
   isVisible: { type: Boolean, default: true },
   isPublished: { type: Boolean, default: false },
   sortOrder: { type: Number, default: 0 },

@@ -29,31 +29,33 @@ export class CallController {
   }
 
   static async createCall(req: Request, res: Response) {
-    const { id, to, from } = req.body;
-    if (!id || !to) {
-      return res
-        .status(400)
-        .json({ error: "Call ID and 'to' number are required" });
+    const { id, to, from, campaignId, salesRepId } = req.body;
+  
+    if (!id || !to || !campaignId || !salesRepId) {
+      return res.status(400).json({ error: "id, to, campaignId, and salesRepId are required" });
     }
-
+  
     try {
       const call = await CallService.createCallRecord({
         id,
         to,
         from: from || process.env.TWILIO_PHONE_NUMBER || "",
         status: CallStatus.INITIATED,
+        campaignId,
+        salesRepId,
       });
+  
       return res.status(201).json(call);
     } catch (error) {
       console.error("Error in createCall controller:", error);
       return res.status(500).json({ error: "Failed to create call" });
     }
-  }
+  }  
 
   static async proceedToNextCall(req: Request, res: Response) {
     const { sessionId, currentCallId, feedback, from, script } = req.body;
 
-    if (!sessionId || !currentCallId || !feedback || !feedback.callOutcome) {
+    if (!sessionId || !currentCallId || !feedback || !feedback.feedbackReason) {
       return res
         .status(400)
         .json({
@@ -79,9 +81,9 @@ export class CallController {
   }
 
   static async submitFeedback(req: Request, res: Response) {
-    const { callId, callOutcome, leadStatus, notes } = req.body;
+    const { callId, feedbackReason, notes } = req.body;
 
-    if (!callId || !callOutcome) {
+    if (!callId || !feedbackReason) {
       return res
         .status(400)
         .json({ error: "Call ID and call outcome are required" });
@@ -89,8 +91,7 @@ export class CallController {
 
     try {
       const feedbackData = await CallService.saveFeedback(callId, {
-        callOutcome,
-        leadStatus,
+        feedbackReason,
         notes: notes || null,
       });
       return res.status(201).json(feedbackData);

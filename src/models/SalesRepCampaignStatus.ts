@@ -22,7 +22,7 @@ export interface ISalesRepCampaignStatus extends Document {
   lastAuditionAt?: Date;
   feedbackNotes?: string;
   resumeUrl?: string;
-  experienceYears?: number;
+  experienceYears?: string;
   country?: string;
   linkedInUrl?: string;
   createdAt: Date;
@@ -48,7 +48,7 @@ const SalesRepCampaignStatusSchema = new Schema<ISalesRepCampaignStatus>({
   lastAuditionAt: { type: Date },
   feedbackNotes: { type: String },
   resumeUrl: { type: String },
-  experienceYears: { type: Number },
+  experienceYears: { type: String },
   country: { type: String },
   linkedInUrl: { type: String },
   createdAt: { type: Date, default: Date.now },

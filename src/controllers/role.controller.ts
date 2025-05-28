@@ -45,13 +45,16 @@ export const updateRoleFeatures = async (req: Request, res: Response) => {
 };
 
 export const getRoleFeatures = async (req: Request, res: Response) => {
+  res.status(200);
+  return;
+
   try {
     const role = await Role.findById(req.params.roleId).populate("featureIds");
     if (!role) {
       res.status(404).json({ error: "Role not found" });
       return;
     }
-    res.status(200).json(role.featureIds);
+    // res.status(200).json(role.featureIds);
   } catch (err) {
     console.error("Failed to get role features:", err);
     res.status(500).json({ error: "Failed to get role features" });

@@ -63,3 +63,15 @@ export const parseLeadCsvService = (
       });
   });
 };
+
+export const getLeadsByCampaignService = async (campaignId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(campaignId)) {
+    throw new Error("Invalid campaignId");
+  }
+
+  return await Lead.find({
+    campaignId: new mongoose.Types.ObjectId(campaignId),
+    status: { $ne: "suppressed" }, 
+  })
+    .lean();
+};

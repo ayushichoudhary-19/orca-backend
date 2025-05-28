@@ -1,4 +1,5 @@
 import { Campaign, CampaignStatus } from "../models/Campaign";
+import { SalesRepCampaignStatus } from "../models/SalesRepCampaignStatus";
 
 export const createCampaign = async (data: any) => {
   return await Campaign.create(data);
@@ -46,15 +47,12 @@ export const addContactsToCampaign = async (
   newContacts: string,
   uploadedCsvFileName: string
 ) => {
-  return await Campaign.findByIdAndUpdate(
-    campaignId,
-    {
-      $set: {
-        uploadedContacts: newContacts,
-        uploadedCsvFileName,
-      },
-    }
-  );
+  return await Campaign.findByIdAndUpdate(campaignId, {
+    $set: {
+      uploadedContacts: newContacts,
+      uploadedCsvFileName,
+    },
+  });
 };
 
 interface IdealCustomerDetails {
@@ -75,15 +73,15 @@ export const addIdealCustomerDetails = async (
     campaignId,
     {
       $set: {
-        ...details
-      }
+        ...details,
+      },
     },
     { new: true }
   );
 };
 
 export const getCampaignStatus = async (campaignId: string) => {
-  const campaign = await Campaign.findById(campaignId).select('status').lean();
+  const campaign = await Campaign.findById(campaignId).select("status").lean();
   return campaign ? campaign.status : null;
 };
 
@@ -101,4 +99,41 @@ export const getPublicCampaignsWithBusinessName = async () => {
       select: "name",
     })
     .lean();
+};
+
+export const fetchCampaignsForSalesRep = async (salesRepId: string) => {
+  const records = await SalesRepCampaignStatus.find({ salesRepId })
+    .populate({
+      path: "campaignId",
+      select:
+        "campaignName logoImageUrl elevatorPitch status qualifiedLeadPrice companyLocation industry",
+    })
+    .lean();
+
+  return records.map((entry) => {
+    const campaign = entry.campaignId as any;
+
+    let stage = "In Progress";
+    if (entry.auditionStatus === "approved") stage = "Approved";
+    else if (
+      ["submitted", "retry", "in_progress"].includes(entry.auditionStatus)
+    )
+      stage = "Under Review";
+    else if (entry.trainingProgress === 100) stage = "Ready to Audition";
+
+    return {
+      _id: campaign._id,
+      campaignName: campaign.campaignName,
+      elevatorPitch: campaign.elevatorPitch,
+      qualifiedLeadPrice: campaign.qualifiedLeadPrice,
+      logoImageUrl: campaign.logoImageUrl,
+      companyLocation: campaign.companyLocation,
+      industry: campaign.industry,
+      campaignTag: campaign.industry?.[0] || "General",
+      status: campaign.status,
+      trainingProgress: entry.trainingProgress,
+      auditionStatus: entry.auditionStatus,
+      stage,
+    };
+  });
 };
