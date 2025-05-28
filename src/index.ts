@@ -70,7 +70,6 @@ app.use("/api/leads", leadsRoutes);
 app.use("/api/accountExecutive", accountExecutiveRoutes);
 app.use("/api/billing", billingRoutes);
 
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });

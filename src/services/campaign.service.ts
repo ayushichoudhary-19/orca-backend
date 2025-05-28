@@ -137,3 +137,35 @@ export const fetchCampaignsForSalesRep = async (salesRepId: string) => {
     };
   });
 };
+
+export const getCampaignsBySalesRepAndType = async (salesRepId: string, type: string) => {
+  const reps = await SalesRepCampaignStatus.find({ salesRepId })
+    .populate({
+      path: "campaignId",
+      select: "campaignName logoImageUrl elevatorPitch status qualifiedLeadPrice companyLocation industry",
+    })
+    .lean();
+
+  const campaigns = reps.map((entry) => {
+    const campaign = entry.campaignId as any;
+    return {
+      ...campaign,
+      trainingProgress: entry.trainingProgress,
+      auditionStatus: entry.auditionStatus,
+      campaignTag: campaign.industry?.[0] || "General",
+    };
+  });
+
+  switch (type) {
+    case "ongoing":
+      return campaigns.filter(c => c.trainingProgress > 0 && c.trainingProgress < 100);
+    case "auditioning":
+      return campaigns.filter(c => ["submitted", "retry", "in_progress"].includes(c.auditionStatus));
+    case "approved":
+      return campaigns.filter(c => c.auditionStatus === "approved");
+    case "rejected":
+      return campaigns.filter(c => c.auditionStatus === "rejected");
+    default:
+      throw new Error("Invalid campaign type");
+  }
+};

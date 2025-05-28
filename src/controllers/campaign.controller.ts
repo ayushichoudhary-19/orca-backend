@@ -251,3 +251,22 @@ export const getCalendlyLinkByCampaignId = async (
     res.status(500).json({ error: "Failed to fetch Calendly link." });
   }
 };
+
+export const getSalesRepCampaignsByStatus = async (req: Request, res: Response) => {
+  try {
+    const { salesRepId } = req.params;
+    const { type } = req.query;
+
+    if (!salesRepId || typeof salesRepId !== "string") {
+      res.status(400).json({ error: "Missing or invalid salesRepId" });
+      return;
+    }
+
+    const campaigns = await campaignService.getCampaignsBySalesRepAndType(salesRepId, String(type));
+    res.status(200).json(campaigns);
+  } catch (error) {
+    console.error("Error in getSalesRepCampaignsByStatus:", error);
+    res.status(500).json({ error: "Failed to fetch campaign" });
+  }
+};
+
