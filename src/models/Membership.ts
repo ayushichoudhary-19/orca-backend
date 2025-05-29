@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IMembership extends Document {
   userId: string,
   businessId?: mongoose.Types.ObjectId;
-  roleId: mongoose.Types.ObjectId;
+  role: string;
   onboardingStep?: number;
   createdAt: Date;
 }
@@ -11,7 +11,7 @@ export interface IMembership extends Document {
 const MembershipSchema = new Schema<IMembership>({
   userId: { type: String, ref: "User", required: true },
   businessId: { type: Schema.Types.ObjectId, ref: "Business", required: false },
-  roleId: { type: Schema.Types.ObjectId, ref: "Role", required: true },
+  role: { type: String, enum: ["admin", "sdr", "ae"], required: true },
   onboardingStep: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });

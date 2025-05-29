@@ -70,13 +70,12 @@ export const registerSalesRep = async (req: Request, res: Response) => {
       email,
       fullName,
       phoneNumber,
-      // resumeUrl,
       languages: JSON.parse(languages),
     });
 
     await assignUser({
       userId: uid,
-      roleId: SDR_ROLE_ID,
+      role: "sdr",
     });
 
     res.status(201).json({ success: true });

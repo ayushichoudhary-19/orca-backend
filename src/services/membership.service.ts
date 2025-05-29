@@ -2,21 +2,21 @@ import { Membership } from "../models/Membership";
 
 export const assignUser = async (data: {
   userId: string;
-  roleId: string;
+  role: "admin" | "sdr" | "ae";
   businessId?: string;
 }) => {
-  const { userId, businessId, roleId } = data;
+  const { userId, businessId, role } = data;
 
-  if (!userId || !roleId) {
-    const error = new Error("Missing userId or roleId");
+  if (!userId || !role) {
+    const error = new Error("Missing userId or role");
     (error as any).statusCode = 400;
     throw error;
   }
 
   return await Membership.create({
     userId,
-    roleId,
-    businessId: businessId || undefined,
+    role,
+    businessId,
     onboardingStep: 0,
   });
 };
@@ -29,11 +29,6 @@ export const getByUserId = async (userId: string) => {
   }
 
   const memberships = await Membership.find({ userId })
-    .populate({
-      path: "roleId",
-      select: "name featureIds",
-      options: { lean: true },
-    })
     .populate({
       path: "businessId",
       select: "name companyWebsite",
@@ -79,9 +74,6 @@ export const checkIfAdmin = async (userId: string, businessId: string) => {
     throw error;
   }
 
-  const membership = await Membership.findOne({ userId, businessId }).populate(
-    "roleId"
-  );
-  const roleName = (membership?.roleId as any)?.name?.toLowerCase();
-  return roleName === "admin";
+  const membership = await Membership.findOne({ userId, businessId }).lean();
+  return membership?.role?.toLowerCase() === "admin";
 };

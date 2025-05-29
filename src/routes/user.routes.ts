@@ -7,7 +7,6 @@ const router = express.Router();
 router.get("/me", authenticate, getCurrentUser);
 router.post("/", createUser);
 router.post("/fcm-token", authenticate, updateFcmToken);
-// router.post("/register-sales-rep", upload.single("resume"), registerSalesRep);
 router.post("/register-sales-rep", upload.none(),registerSalesRep);
 
 export default router;
