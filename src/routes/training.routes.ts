@@ -14,7 +14,8 @@ import {
   getTrainingsForSDR,
   getTrainingContentById,
   markTrainingComplete,
-  getTrainingProgress
+  getTrainingProgress,
+  bulkPublishTrainings,
 } from "../controllers/training.controller";
 import { TRAINING_TYPES } from "../utils/trainingTypes";
 
@@ -22,6 +23,7 @@ const router = Router();
 
 router.post("/", createTraining);
 router.get("/campaign/:campaignId", getTrainingsByCampaign);
+router.post("/publish-bulk/:campaignId", bulkPublishTrainings);
 router.get("/:id", getTrainingById);
 router.put("/:id", updateTraining);
 router.patch("/:id/visibility", toggleTrainingVisibility);

@@ -156,3 +156,14 @@ export const getTrainingProgress = async (req: Request, res: Response) => {
     res.status(err.statusCode || 500).json({ error: err.message });
   }
 };
+
+export const bulkPublishTrainings = async (req: Request, res: Response) => {
+  try {
+    const { campaignId } = req.params;
+    await trainingService.bulkPublishTrainings(campaignId);
+    res.status(200).json({ message: "Trainings published successfully." });
+  } catch (error: any) {
+    console.error("Bulk publish failed:", error);
+    res.status(500).json({ error: "Failed to publish trainings" });
+  }
+}

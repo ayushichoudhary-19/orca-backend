@@ -203,3 +203,10 @@ export const getTrainingProgress = async (
     completedTrainingIds: status.completedTrainingIds || [],
   };
 };
+
+export const bulkPublishTrainings = async (campaignId: string) => {
+  await TrainingModel.updateMany(
+    { campaignId },
+    { isPublished: true, lastSavedAt: new Date() }
+  );
+};
