@@ -1,6 +1,6 @@
 import { Business } from "../models/Business";
 
-export const createBusiness = async (data: { name: string; companyWebsite?: string; createdBy: string }) => {
+export const createBusiness = async (data: { name: string; companyWebsite?: string; createdBy?: string }) => {
   return await Business.create(data);
 };
 

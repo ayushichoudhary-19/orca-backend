@@ -25,7 +25,9 @@ export const handleCalendlyWebhook = async (req: Request, res: Response) => {
         (q: any) => q.question === "SDR's Registered Email ID"
       )?.answer;
 
-      const salesRep = sdrEmail ? await User.findOne({ email: sdrEmail }) : null;
+      const salesRep = sdrEmail
+        ? await User.findOne({ email: sdrEmail })
+        : null;
       const salesRepId = salesRep?._id?.toString();
 
       await Meeting.create({
@@ -38,10 +40,7 @@ export const handleCalendlyWebhook = async (req: Request, res: Response) => {
         status: "scheduled",
       });
 
-      await Lead.findOneAndUpdate(
-        { email, campaignId },
-        { status: "meeting" }
-      );
+      await Lead.findOneAndUpdate({ email, campaignId }, { status: "meeting" });
     }
 
     if (event.event === "invitee.canceled") {
@@ -61,7 +60,6 @@ export const handleCalendlyWebhook = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Webhook handling failed." });
   }
 };
-
 
 const CLIENT_ID = process.env.CALENDLY_CLIENT_ID!;
 const CLIENT_SECRET = process.env.CALENDLY_CLIENT_SECRET!;
@@ -83,7 +81,6 @@ export const startCalendlyOAuth = (req: Request, res: Response) => {
   res.redirect(authUrl);
 };
 
-
 export const handleCalendlyOAuthCallback = async (
   req: Request,
   res: Response
@@ -97,7 +94,6 @@ export const handleCalendlyOAuthCallback = async (
   }
 
   try {
-    // exchanging code
     const tokenRes = await axios.post("https://auth.calendly.com/oauth/token", {
       grant_type: "authorization_code",
       code,
@@ -108,28 +104,37 @@ export const handleCalendlyOAuthCallback = async (
 
     const accessToken = tokenRes.data.access_token;
 
-    // for fetching etch user info
     const userRes = await axios.get("https://api.calendly.com/users/me", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     const calendlyLink = userRes.data.resource.scheduling_url;
     const userUri = userRes.data.resource.uri;
+    const organizationUri = userRes.data.resource.current_organization;
+    if (!organizationUri) {
+      console.error(
+        "Organization URI not found in /users/me response. Cannot register webhook requiring organization."
+      );
+    }
 
-    // saving to Campaign
     await Campaign.findByIdAndUpdate(campaignId, {
       calendlyLink,
       calendlyAccessToken: accessToken,
     });
 
-    // registering webhook (for invitee.created & invitee.canceled)
+    console.log("Attempting to register webhook for user URI:", userUri);
+    console.log(
+      "Webhook URL to be registered:",
+      `${process.env.BASE_URL}/api/calendly/webhook`
+    );
+
     await axios.post(
       "https://api.calendly.com/webhook_subscriptions",
       {
         url: `${process.env.BASE_URL}/api/calendly/webhook`,
         events: ["invitee.created", "invitee.canceled"],
-        scope: "user",
-        user: userUri,
+        scope: "organization",
+        organization: organizationUri,
       },
       {
         headers: {
@@ -141,9 +146,27 @@ export const handleCalendlyOAuthCallback = async (
 
     res.redirect(`${process.env.CLIENT_URL}/meetings?connected=calendly`);
     return;
-  } catch (error) {
-    console.error("OAuth callback error", error);
-    res.status(500).send("Calendly OAuth failed");
+  } catch (error: any) {
+    console.error("OAuth callback error encountered!");
+    if (error.isAxiosError) {
+      console.error("Axios Error Details:");
+      console.error("Error Message:", error.message);
+      if (error.response) {
+        console.error("Response Status:", error.response.status);
+        console.error(
+          "Response Data:",
+          JSON.stringify(error.response.data, null, 2)
+        );
+        console.error("Response Headers:", error.response.headers);
+      }
+      console.error("Request Config:", error.config);
+    } else {
+      console.error("Non-Axios Error:", error.message);
+      console.error("Full error object:", error);
+    }
+    res
+      .status(500)
+      .send("Calendly OAuth failed. Check server logs for details.");
     return;
   }
 };

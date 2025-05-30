@@ -15,7 +15,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     req.user = {
       uid: decoded.uid,
       email: decoded.email,
-    };
+    };    
 
     next();
   } catch (err) {

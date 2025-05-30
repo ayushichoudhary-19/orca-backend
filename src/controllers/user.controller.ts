@@ -1,12 +1,25 @@
 import { Request, Response } from "express";
 import * as userService from "../services/user.service";
-import { assignUser } from "../services/membership.service";
+import { Invite } from "../models/Invite";
+import { Types } from "mongoose";
+import { User } from "../models/User";
 
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
-    const user = await userService.findUserByFirebaseUid(
-      (req as any).user?.firebaseUid!
-    );
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    console.log("Looking up user by UID:", req.user?.uid);
+
+    const user = await User.findById(uid).lean();
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
     res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch user" });
@@ -17,11 +30,29 @@ export const createUser = async (req: Request, res: Response) => {
   try {
     const { uid, email, name } = req.body;
     const firebaseUid = uid;
+
+    const invite = await Invite.findOne({ email });
+
+    let role: "admin" | "ae" | "sdr" = "sdr";
+    let businessId: Types.ObjectId | undefined = undefined;
+
+    if (invite) {
+      const allowedRoles = ["admin", "ae"] as const;
+      if (allowedRoles.includes(invite.role as any)) {
+        role = invite.role as "admin" | "ae";
+        businessId = invite.businessId!;
+        await Invite.deleteOne({ _id: invite._id });
+      }
+    }
+
     const user = await userService.createUser({
       firebaseUid,
       email,
       name,
+      role,
+      businessId,
     });
+
     res.status(201).json(user);
   } catch (err) {
     console.error(err);
@@ -32,36 +63,11 @@ export const createUser = async (req: Request, res: Response) => {
 export const registerSalesRep = async (req: Request, res: Response) => {
   try {
     const { uid, email, fullName, phoneNumber, languages } = req.body;
-    // const resumeUrl = req.file?.path;
-    const SDR_ROLE_ID = process.env.SDR_ROLE_ID!;
 
-    console.log("Received SDR registration:", {
-      uid,
-      email,
-      fullName,
-      phoneNumber,
-      // resume: req.file?.path,
-      languages,
-      SDR_ROLE_ID: process.env.SDR_ROLE_ID,
-    });
-
-    if (!uid || !email || !fullName || !phoneNumber || !SDR_ROLE_ID) {
-      res
-        .status(400)
-        .json({
-          error:
-            "Missing required fields: " + uid
-              ? ""
-              : "uid, " + email
-              ? ""
-              : "email, " + fullName
-              ? ""
-              : "fullName, " + phoneNumber
-              ? ""
-              : "phoneNumber, " + SDR_ROLE_ID
-              ? ""
-              : "SDR_ROLE_ID",
-        });
+    if (!uid || !email || !fullName || !phoneNumber) {
+      res.status(400).json({
+        error: "Missing required fields: uid, email, fullName, phoneNumber",
+      });
       return;
     }
 
@@ -70,20 +76,14 @@ export const registerSalesRep = async (req: Request, res: Response) => {
       email,
       fullName,
       phoneNumber,
+      role: "sdr",
       languages: JSON.parse(languages),
     });
 
-    await assignUser({
-      userId: uid,
-      role: "sdr",
-    });
-
     res.status(201).json({ success: true });
-    return;
   } catch (err) {
     console.error("Sales rep registration failed:", err);
     res.status(500).json({ error: "Failed to register sales rep" });
-    return;
   }
 };
 

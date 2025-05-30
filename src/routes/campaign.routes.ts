@@ -13,6 +13,8 @@ import {
   getCalendlyLinkByCampaignId,
   addCalendlyLink,
   getSalesRepCampaignsByStatus,
+  updateQualificationPrice,
+  updateCampaignControls,
 } from "../controllers/campaign.controller";
 import { getMeetingsByCampaign } from "../controllers/meeting.controller";
 
@@ -30,7 +32,9 @@ router.get("/:campaignId/status", getCampaignStatus);
 router.post("/my-campaigns", getMyCampaigns);
 router.post("/:id/calendly-link", addCalendlyLink);
 router.get("/:id/calendly-link", getCalendlyLinkByCampaignId);
-router.get("/:id/meetings", getMeetingsByCampaign)
+router.get("/:id/meetings", getMeetingsByCampaign);
+router.patch("/:id/settings/qualification", updateQualificationPrice);
 router.get("/sales-rep-campaigns/:salesRepId", getSalesRepCampaignsByStatus);
+router.patch("/:campaignId/settings/controls", updateCampaignControls);
 
 export default router;

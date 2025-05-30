@@ -5,15 +5,14 @@ import bodyParser from "body-parser";
 import { createServer } from "http";
 import { Server as SocketServer, Socket } from "socket.io";
 import twilio from "twilio";
-import callRoutes from "./routes/call.routes";
 import path from "path";
+import mongoose from "mongoose";
 import { CallService } from "./services/call.service";
-import membershipRoutes from "./routes/membership.routes";
+import callRoutes from "./routes/call.routes";
 import userRoutes from "./routes/user.routes";
 import campaignRoutes from "./routes/campaign.routes";
 import businessRoutes from "./routes/business.routes";
 import trainingRoutes from "./routes/training.routes";
-import mongoose from "mongoose";
 import contextRoutes from "./routes/context.routes";
 import postRoutes from "./routes/post.routes";
 import uploadRoutes from "./routes/upload.routes";
@@ -22,6 +21,7 @@ import calendlyRoutes from "./routes/calendly.route";
 import leadsRoutes from "./routes/leads.routes";
 import accountExecutiveRoutes from "./routes/AE.routes";
 import billingRoutes from "./routes/billing.routes";
+import inviteRoutes from "./routes/invite.routes";
 
 dotenv.config();
 
@@ -48,9 +48,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "../public")));
-
 app.use("/api/calls", callRoutes);
-app.use("/api/memberships", membershipRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/campaign", campaignRoutes);
 app.use("/api/business", businessRoutes);
@@ -63,6 +61,7 @@ app.use("/api/calendly", calendlyRoutes);
 app.use("/api/leads", leadsRoutes);
 app.use("/api/accountExecutive", accountExecutiveRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/invites", inviteRoutes);
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));

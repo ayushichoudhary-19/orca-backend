@@ -46,7 +46,13 @@ export interface ICampaign extends Document {
     callbacksAllowed: boolean;
   };
   callingHours?: {
-    [day: string]: { open: boolean; start?: string; end?: string };
+    SUNDAY?: boolean;
+    MONDAY?: boolean;
+    TUESDAY?: boolean;
+    WEDNESDAY?: boolean;
+    THURSDAY?: boolean;
+    FRIDAY?: boolean;
+    SATURDAY?: boolean;
   };
   accountExecutives?: string[];
 }
@@ -93,17 +99,18 @@ const CampaignSchema = new Schema<ICampaign>({
   },
   campaignControls: {
     selfSourced: { type: Boolean, default: false },
-    dialerAllowed: { type: Boolean, default: true },
+    dialerAllowed: { type: Boolean, default: false },
     marketplaceVisible: { type: Boolean, default: true },
-    callbacksAllowed: { type: Boolean, default: true },
+    callbacksAllowed: { type: Boolean, default: false },
   },
   callingHours: {
-    type: Map,
-    of: {
-      open: { type: Boolean, default: false },
-      start: String,
-      end: String,
-    },
+    SUNDAY: { type: Boolean, default: false },
+    MONDAY: { type: Boolean, default: false },
+    TUESDAY: { type: Boolean, default: true },
+    WEDNESDAY: { type: Boolean, default: true },
+    THURSDAY: { type: Boolean, default: false },
+    FRIDAY: { type: Boolean, default: false },
+    SATURDAY: { type: Boolean, default: false },
   },
   accountExecutives: [String],
 });

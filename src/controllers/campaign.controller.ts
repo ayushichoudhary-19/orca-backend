@@ -252,7 +252,10 @@ export const getCalendlyLinkByCampaignId = async (
   }
 };
 
-export const getSalesRepCampaignsByStatus = async (req: Request, res: Response) => {
+export const getSalesRepCampaignsByStatus = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { salesRepId } = req.params;
     const { type } = req.query;
@@ -262,7 +265,10 @@ export const getSalesRepCampaignsByStatus = async (req: Request, res: Response) 
       return;
     }
 
-    const campaigns = await campaignService.getCampaignsBySalesRepAndType(salesRepId, String(type));
+    const campaigns = await campaignService.getCampaignsBySalesRepAndType(
+      salesRepId,
+      String(type)
+    );
     res.status(200).json(campaigns);
   } catch (error) {
     console.error("Error in getSalesRepCampaignsByStatus:", error);
@@ -270,3 +276,52 @@ export const getSalesRepCampaignsByStatus = async (req: Request, res: Response) 
   }
 };
 
+export const updateQualificationPrice = async (req: Request, res: Response) => {
+  try {
+    const { campaignId } = req.params;
+    const { qualificationPrice } = req.body;
+    if (!campaignId || !qualificationPrice) {
+      res.status(400).json({ error: "Missing required fields" });
+      return;
+    }
+    const updated = await campaignService.updateQualificationPrice(
+      campaignId,
+      qualificationPrice
+    );
+    if (!updated) {
+      res.status(404).json({ error: "Campaign not found" });
+      return;
+    }
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update qualification price" });
+  }
+};
+
+export const updateCampaignControls = async (req: Request, res: Response) => {
+  try {
+    const { campaignId } = req.params;
+    const { controls, hours } = req.body;
+    
+    if (!campaignId || (!controls && !hours)) {
+      res.status(400).json({ error: "Missing required fields" });
+      return;
+    }
+    
+    const updated = await campaignService.updateCampaignControls(
+      campaignId,
+      { controls, hours }
+    );
+    
+    if (!updated) {
+      res.status(404).json({ error: "Campaign not found" });
+      return;
+    }
+    
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update campaign settings" });
+  }
+};

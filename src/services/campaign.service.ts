@@ -138,11 +138,15 @@ export const fetchCampaignsForSalesRep = async (salesRepId: string) => {
   });
 };
 
-export const getCampaignsBySalesRepAndType = async (salesRepId: string, type: string) => {
+export const getCampaignsBySalesRepAndType = async (
+  salesRepId: string,
+  type: string
+) => {
   const reps = await SalesRepCampaignStatus.find({ salesRepId })
     .populate({
       path: "campaignId",
-      select: "campaignName logoImageUrl elevatorPitch status qualifiedLeadPrice companyLocation industry",
+      select:
+        "campaignName logoImageUrl elevatorPitch status qualifiedLeadPrice companyLocation industry",
     })
     .lean();
 
@@ -158,14 +162,54 @@ export const getCampaignsBySalesRepAndType = async (salesRepId: string, type: st
 
   switch (type) {
     case "ongoing":
-      return campaigns.filter(c => c.trainingProgress > 0 && c.trainingProgress < 100);
+      return campaigns.filter(
+        (c) => c.trainingProgress > 0 && c.trainingProgress < 100
+      );
     case "auditioning":
-      return campaigns.filter(c => ["submitted", "retry", "in_progress"].includes(c.auditionStatus));
+      return campaigns.filter((c) =>
+        ["submitted", "retry", "in_progress"].includes(c.auditionStatus)
+      );
     case "approved":
-      return campaigns.filter(c => c.auditionStatus === "approved");
+      return campaigns.filter((c) => c.auditionStatus === "approved");
     case "rejected":
-      return campaigns.filter(c => c.auditionStatus === "rejected");
+      return campaigns.filter((c) => c.auditionStatus === "rejected");
     default:
       throw new Error("Invalid campaign type");
   }
+};
+
+export const updateQualificationPrice = async (
+  campaignId: string,
+  price: number
+) => {
+  return await Campaign.findByIdAndUpdate(
+    campaignId,
+    {
+      $set: {
+        qualifiedLeadPrice: price,
+      },
+    },
+    { new: true }
+  );
+};
+
+export const updateCampaignControls = async (
+  campaignId: string,
+  settings: { controls?: any; hours?: any }
+) => {
+  const updateData: any = {};
+
+  if (settings.controls) {
+    updateData.campaignControls = settings.controls;
+  }
+
+  if (settings.hours) {
+    updateData.callingHours = settings.hours;
+  }
+
+  return await Campaign.findByIdAndUpdate(
+    campaignId,
+    { $set: updateData },
+    { new: true }
+  );
 };
